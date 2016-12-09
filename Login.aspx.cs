@@ -45,7 +45,7 @@ public partial class Login : System.Web.UI.Page
         comm = new OracleCommand(
           "SELECT * FROM EMPLOYEE where USERNAME= :UN and PASSWORD= :PW",
           conn);
-        comm.Parameters.Add("UN", OracleDbType.Int32);// username);
+        comm.Parameters.Add("UN", username);
         comm.Parameters.Add("PW", password);
         // Enclose database code in Try-Catch-Finally
         try

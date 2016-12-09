@@ -34,7 +34,7 @@ public class DatabaseManager
 
     #region Methods
 
-    public void getEmployees(Action<DataSet> success, Action failed)
+    public void getEmployees(Action<DataSet> success, Action failure)
     {
         OracleCommand oracleCommand = new OracleCommand("SELECT * FROM EMPLOYEE", connection);
 
@@ -53,7 +53,7 @@ public class DatabaseManager
         }
         catch
         {
-            failed.Invoke();
+            failure.Invoke();
         }
         finally
         {
@@ -61,14 +61,84 @@ public class DatabaseManager
         }
     }
 
-    public void searchEmployees(string searchStr, Action<DataSet> success, Action<string> failed)
+    public void getEmployeesSummaries(Action<DataSet> success, Action failure)
     {
-        string query = "SELECT * FROM EMPLOYEE " +
-            "WHERE FIRSTNAME LIKE '%' || :SS  || '%' " +
-            "OR LASTNAME LIKE '%' || :SS  || '%' " +
-            "OR USERNAME LIKE '%' || :SS  || '%'";
+        OracleCommand oracleCommand = new OracleCommand("SELECT EMPLOYEEID, FIRSTNAME FROM EMPLOYEE", connection);
+
+        try
+        {
+            connection.Open();
+
+            OracleDataAdapter oracleDataAdapter = new OracleDataAdapter(oracleCommand);
+
+            DataSet dataSet = new DataSet();
+
+            oracleDataAdapter.Fill(dataSet);
+
+            success.Invoke(dataSet);
+
+        }
+        catch
+        {
+            failure.Invoke();
+        }
+        finally
+        {
+            connection.Close();
+        }
+    }
+    public void getEmployeeByID(int employeeID, Action<DataSet> success, Action failure)
+    {
+        OracleCommand oracleCommand = new OracleCommand("SELECT * FROM EMPLOYEE WHERE EMPLOYEEID = @EmployeeID", connection);
+
+        oracleCommand.Parameters.Add("@EmployeeID", employeeID);
+
+        try
+        {
+            connection.Open();
+
+            OracleDataAdapter oracleDataAdapter = new OracleDataAdapter(oracleCommand);
+
+            DataSet dataSet = new DataSet();
+
+            oracleDataAdapter.Fill(dataSet);
+
+            success.Invoke(dataSet);
+
+        }
+        catch
+        {
+            failure.Invoke();
+        }
+        finally
+        {
+            connection.Close();
+        }
+    }
+
+    public void searchEmployees(string searchType, string searchStr, Action<DataSet> success, Action<string> failed)
+    {
+        string query = "";
+
+        switch(searchType)
+        {
+            case "fname":
+                query = "SELECT * FROM EMPLOYEE " +
+            "WHERE UPPER(FIRSTNAME) LIKE '%' || :SS  || '%' ";
+                break;
+            case "lname":
+                query = "SELECT * FROM EMPLOYEE " +
+            "WHERE UPPER(LASTNAME) LIKE '%' || :SS  || '%' ";
+                break;
+            case "uname":
+                query = "SELECT * FROM EMPLOYEE " +
+            "WHERE UPPER(USERNAME) LIKE '%' || :SS  || '%' ";
+                break;
+        }
+
+        
         OracleCommand oracleCommand = new OracleCommand(query, connection);
-        oracleCommand.Parameters.Add("SS", OracleDbType.Varchar2).Value = searchStr;
+        oracleCommand.Parameters.Add("SS", OracleDbType.Varchar2).Value = searchStr.Trim().ToUpper();
 
         try
         {
@@ -109,6 +179,43 @@ public class DatabaseManager
         oracleCommand.Parameters.Add("ZIP", employee.zip);
         oracleCommand.Parameters.Add("PHONENUMBER", employee.phoneNumber);
         //TODO Remove hardcoded values
+        oracleCommand.Parameters.Add("DEPARTMENTID", 3);
+        oracleCommand.Parameters.Add("COMPANYID", 1);
+
+        try
+        {
+            connection.Open();
+
+            oracleCommand.ExecuteNonQuery();
+
+            success.Invoke();
+        }
+        catch
+        {
+            failure.Invoke();
+        }
+        finally
+        {
+            connection.Close();
+        }
+    }
+
+    public void updateEmployee(Employee employee, Action success, Action failure)
+    {
+        OracleCommand oracleCommand = new OracleCommand("UPDATE Employee" + 
+            " SET FIRSTNAME=@Firstname, LASTNAME=@Lastname, USERNAME=@Username, " +
+            "ADDRESS=@Address, CITY=@City, STATE=@State, ZIP=@Zip, " +
+            "PHONENUMBER=@PhoneNumber " +
+            "WHERE EMPLOYEEID=@EmployeeID", connection);
+
+        oracleCommand.Parameters.Add("FIRSTNAME", employee.firstName);
+        oracleCommand.Parameters.Add("LASTNAME", employee.lastName);
+        oracleCommand.Parameters.Add("USERNAME", employee.username);
+        oracleCommand.Parameters.Add("ADDRESS", employee.address);
+        oracleCommand.Parameters.Add("CITY", employee.city);
+        oracleCommand.Parameters.Add("STATE", employee.state);
+        oracleCommand.Parameters.Add("ZIP", employee.zip);
+        oracleCommand.Parameters.Add("PHONENUMBER", employee.phoneNumber);
         oracleCommand.Parameters.Add("DEPARTMENTID", 3);
         oracleCommand.Parameters.Add("COMPANYID", 1);
 
