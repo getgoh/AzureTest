@@ -43,7 +43,7 @@ public partial class Login : System.Web.UI.Page
         conn = new OracleConnection(connectionString);
         // Create command
         comm = new OracleCommand(
-          "SELECT * FROM EMPLOYEE where USERNAME= :UN and PASSWORD= :PW",
+          "SELECT * FROM EMPLOYEE JOIN TAX ON EMPLOYEE.EMPLOYEEID = TAX.EMPLOYEEID where USERNAME= :UN and PASSWORD= :PW",
           conn);
         comm.Parameters.Add("UN", username);
         comm.Parameters.Add("PW", password);
@@ -60,6 +60,16 @@ public partial class Login : System.Web.UI.Page
                 reader.Read();
                 //showMessage(reader[0].ToString() + " " + reader[1].ToString());
                 showMessage(string.Format("Name: {0} {1}", reader["FIRSTNAME"], reader["LASTNAME"]));
+                User currUser = new global::User();
+                currUser.Firstname = reader["FIRSTNAME"].ToString();
+                currUser.Lastname = reader["LASTNAME"].ToString();
+                currUser.UserId = int.Parse(reader["EMPLOYEEID"].ToString());
+                currUser.TotalIncome = int.Parse(reader["TOTALINCOME"].ToString());
+                currUser.TotalTaxesPaid = int.Parse(reader["TOTALTAXESPAID"].ToString());
+                currUser.Contributions = int.Parse(reader["CONTRIBUTIONS"].ToString());
+                Session["User"] = currUser;
+
+                Response.Redirect(Session["RedirectPage"].ToString());
             }
             else
             {
