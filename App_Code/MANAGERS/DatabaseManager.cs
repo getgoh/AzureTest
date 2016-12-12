@@ -48,17 +48,18 @@ public class DatabaseManager
 
             oracleDataAdapter.Fill(dataSet);
 
+            connection.Close();
+
             success.Invoke(dataSet);
 
         }
         catch
         {
+            connection.Close();
+
             failure.Invoke();
         }
-        finally
-        {
-            connection.Close();
-        }
+        
     }
 
     public void getEmployeesSummaries(Action<DataSet> success, Action failure)
@@ -75,23 +76,23 @@ public class DatabaseManager
 
             oracleDataAdapter.Fill(dataSet);
 
+            connection.Close();
+
             success.Invoke(dataSet);
 
         }
         catch
         {
-            failure.Invoke();
-        }
-        finally
-        {
             connection.Close();
+
+            failure.Invoke();
         }
     }
     public void getEmployeeByID(int employeeID, Action<DataSet> success, Action failure)
     {
-        OracleCommand oracleCommand = new OracleCommand("SELECT * FROM EMPLOYEE WHERE EMPLOYEEID = @EmployeeID", connection);
+        OracleCommand oracleCommand = new OracleCommand("SELECT * FROM EMPLOYEE WHERE EMPLOYEEID = :EmployeeID", connection);
 
-        oracleCommand.Parameters.Add("@EmployeeID", employeeID);
+        oracleCommand.Parameters.Add("EmployeeID", employeeID);
 
         try
         {
@@ -103,17 +104,18 @@ public class DatabaseManager
 
             oracleDataAdapter.Fill(dataSet);
 
+            connection.Close();
+
             success.Invoke(dataSet);
 
         }
         catch
         {
+            connection.Close();
+
             failure.Invoke();
         }
-        finally
-        {
-            connection.Close();
-        }
+        
     }
 
     public void searchEmployees(string searchType, string searchStr, Action<DataSet> success, Action<string> failed)
@@ -150,46 +152,18 @@ public class DatabaseManager
 
             oracleDataAdapter.Fill(dataSet);
 
+            connection.Close();
+
             success.Invoke(dataSet);
 
         }
         catch(Exception ex)
         {
+            connection.Close();
+
             failed.Invoke(ex.Message);
         }
-        finally
-        {
-            connection.Close();
-        }
-    }
-
-    public void insertLoan(int employeeId, int amount, double interestRate, int years, Action success, Action<string> failure)
-    {
-        OracleCommand oracleCommand = new OracleCommand("SP_INSERT_LOAN", connection);
-
-        oracleCommand.CommandType = CommandType.StoredProcedure;
-
-        oracleCommand.Parameters.Add("LOANVALUE", amount);
-        oracleCommand.Parameters.Add("YEARS", years);
-        oracleCommand.Parameters.Add("INTERESTRATE", interestRate);
-        oracleCommand.Parameters.Add("EMPLOYEEID", employeeId);
-
-        try
-        {
-            connection.Open();
-
-            oracleCommand.ExecuteNonQuery();
-
-            success.Invoke();
-        }
-        catch(Exception e)
-        {
-            failure.Invoke(e.Message);
-        }
-        finally
-        {
-            connection.Close();
-        }
+        
     }
 
     public void insertEmployee(Employee employee, Action success, Action failure)
@@ -217,36 +191,36 @@ public class DatabaseManager
 
             oracleCommand.ExecuteNonQuery();
 
+            connection.Close();
+
             success.Invoke();
         }
         catch
         {
+            connection.Close();
+
             failure.Invoke();
         }
-        finally
-        {
-            connection.Close();
-        }
+        
     }
 
     public void updateEmployee(Employee employee, Action success, Action failure)
     {
         OracleCommand oracleCommand = new OracleCommand("UPDATE Employee" + 
-            " SET FIRSTNAME=@Firstname, LASTNAME=@Lastname, USERNAME=@Username, " +
-            "ADDRESS=@Address, CITY=@City, STATE=@State, ZIP=@Zip, " +
-            "PHONENUMBER=@PhoneNumber " +
-            "WHERE EMPLOYEEID=@EmployeeID", connection);
+            " SET FIRSTNAME=:Firstname, LASTNAME=:Lastname, USERNAME=:Username, " +
+            "ADDRESS=:Address, CITY=:City, STATE=:State, ZIP=:Zip, " +
+            "PHONENUMBER=:PhoneNumber " +
+            "WHERE EMPLOYEEID=:EmployeeID", connection);
 
-        oracleCommand.Parameters.Add("FIRSTNAME", employee.firstName);
-        oracleCommand.Parameters.Add("LASTNAME", employee.lastName);
-        oracleCommand.Parameters.Add("USERNAME", employee.username);
-        oracleCommand.Parameters.Add("ADDRESS", employee.address);
-        oracleCommand.Parameters.Add("CITY", employee.city);
-        oracleCommand.Parameters.Add("STATE", employee.state);
-        oracleCommand.Parameters.Add("ZIP", employee.zip);
-        oracleCommand.Parameters.Add("PHONENUMBER", employee.phoneNumber);
-        oracleCommand.Parameters.Add("DEPARTMENTID", 3);
-        oracleCommand.Parameters.Add("COMPANYID", 1);
+        oracleCommand.Parameters.Add("Firstname", employee.firstName);
+        oracleCommand.Parameters.Add("Lastname", employee.lastName);
+        oracleCommand.Parameters.Add("Username", employee.username);
+        oracleCommand.Parameters.Add("Address", employee.address);
+        oracleCommand.Parameters.Add("City", employee.city);
+        oracleCommand.Parameters.Add("State", employee.state);
+        oracleCommand.Parameters.Add("Zip", employee.zip);
+        oracleCommand.Parameters.Add("PhoneNumber", employee.phoneNumber);
+        oracleCommand.Parameters.Add("EmployeeID", employee.employeeID);
 
         try
         {
@@ -254,15 +228,15 @@ public class DatabaseManager
 
             oracleCommand.ExecuteNonQuery();
 
+            connection.Close();
+
             success.Invoke();
         }
-        catch
-        {
-            failure.Invoke();
-        }
-        finally
+        catch (Exception e)
         {
             connection.Close();
+
+            failure.Invoke();
         }
     }
 
@@ -286,20 +260,103 @@ public class DatabaseManager
 
             if (successReturn)
             {
+                connection.Close();
+
                 success.Invoke();
             }
             else
             {
+                connection.Close();
+
                 failure.Invoke();
             }
         }
         catch
         {
+            connection.Close();
+
             failure.Invoke();
         }
-        finally
+        
+    }
+
+    public void insertTax(Tax tax, Action<double> success, Action failure)
+    {
+        OracleCommand oracleCommand = new OracleCommand("SP_INSERT_TAX", connection);
+
+        oracleCommand.CommandType = CommandType.StoredProcedure;
+
+        oracleCommand.Parameters.Add("EMPLOYEEID", 1);
+        oracleCommand.Parameters.Add("INCOME", tax.incomes);
+        oracleCommand.Parameters.Add("TAXESPAID", tax.taxesPaid);
+        oracleCommand.Parameters.Add("CONTR", tax.contributions);
+        oracleCommand.Parameters.Add("REFUND", tax.refund);
+        oracleCommand.Parameters["REFUND"].Direction = ParameterDirection.Output;
+
+        try
+        {
+            connection.Open();
+
+            oracleCommand.ExecuteNonQuery();
+
+            connection.Close();
+
+            connection.Open();
+
+            OracleCommand oracleCommandSelect = new OracleCommand("SELECT REFUND FROM TAX WHERE (EMPLOYEEID = :EmployeeID AND TAXYEAR = :TaxYear)", connection);
+
+            DateTime dateTime = DateTime.Today;
+            oracleCommandSelect.Parameters.Add("EmployeeID", 1);
+            oracleCommandSelect.Parameters.Add("TaxYear", dateTime.Year);
+
+            Console.WriteLine(oracleCommand);
+
+            OracleDataAdapter oracleDataAdapter = new OracleDataAdapter(oracleCommandSelect);
+
+            DataSet dataSet = new DataSet();
+
+            oracleDataAdapter.Fill(dataSet);
+
+            tax.refund = Double.Parse(dataSet.Tables[0].Rows[0]["REFUND"].ToString());
+
+            success.Invoke(tax.refund);
+        }
+        catch (Exception e)
         {
             connection.Close();
+
+            Console.WriteLine(e.Message);
+            failure.Invoke();
+        }
+        
+    }
+
+    public void insertLoan(Loan loan, Action success, Action failure)
+    {
+        OracleCommand oracleCommand = new OracleCommand("SP_INSERT_LOAN", connection);
+
+        oracleCommand.CommandType = CommandType.StoredProcedure;
+
+        oracleCommand.Parameters.Add("LOANVALUE", loan.loanValue);
+        oracleCommand.Parameters.Add("YEARS", loan.years);
+        oracleCommand.Parameters.Add("INTERESTRATE", loan.interestRate);
+        oracleCommand.Parameters.Add("EMPLOYEEID", 1);
+
+        try
+        {
+            connection.Open();
+
+            oracleCommand.ExecuteNonQuery();
+
+            connection.Close();
+
+            success.Invoke();
+        }
+        catch (Exception e)
+        {
+            connection.Close();
+
+            failure.Invoke();
         }
     }
 
